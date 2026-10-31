@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARLANE-BAN | Attack Engine</title>
+    <style>
+    /* --- STYLE GLOBAL --- */
+    body, html {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background-color: #050505;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    color: white;
+ }
+
+    /* --- ARRIÈRE PLAN (Matrix + Pendule Laotze) --- */
+  #matrix-bg {
+    position: fixed; top: 0; left: 0; z-index: -2;
+    canvas { display: block; }
+ }
+
+    /* --- CENTRE --- */
+.main-interface {
+    display: flex; flex-direction: column; align-items: center; 
+    justify-content: center; height: 100vh;
+    position: relative; z-index: 10;
+    padding: 20px;
+ }
+
+    /* --- HEADER --- */
+.hero-header {
+    text-align: center; margin-bottom: 20px;
+ }
+  
+.brand-name {
+    font-size: 3rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, #00F260, #0575E6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(0, 242, 96, 0.4);
+    letter-spacing: -1px;
+ }
+
+.brand-subtitle {
+    font-size: 0.9rem; color: #888; letter-spacing: 5px; text-transform: uppercase; margin-top: 5px;
+ }
+
+    /* --- INPUT SECTION --- */
+.input-wrapper {
+    width: 100%; max-width: 500px;
+    margin-bottom: 30px;
+    position: relative;
+ }
+
+ input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #333;
+    color: #fff;
+    padding: 20px;
+    font-size: 1.5rem; text-align: center;
+    outline: none; transition: 0.4s;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+ }
+
+ input:focus {
+    border-color: #00F260;
+    box-shadow: 0 0 40px rgba(0, 242, 96, 0.3);
+ }
+
+    /* --- BUTTONS --- */
+.btn-group {
+    display: flex; gap: 15px; width: 100%; max-width: 500px;
+ }
+
+.btn-action {
+    flex: 1; padding: 18px; font-size: 1.1rem; font-weight: bold;
+    border: none; border-radius: 8px; cursor: pointer;
+    text-transform: uppercase; transition: 0.3s;
+ }
+  
+.btn-check { background: #333; color: #888; }
+.btn-check.highlight {
+    background: white; color: black; box-shadow: 0 0 20px white;
+ }
+  
+.btn-check.highlight:hover {
+    background: #ccc; transform: scale(1.05);
+ }
+
+    /* --- OUTPUT BOX (Style Python Bot) --- */
+.result-box {
+    width: 100%; max-width: 500px;
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 0;
+    display: none; /* Caché par défaut */
+    box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+    overflow: hidden;
+ }
+
+.result-header {
+    background: #111;
+    padding: 10px 15px;
+    border-bottom: 1px solid #333;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem; color: #aaa; font-family: monospace;
+ }
+  
+.result-icon { color: #00F260; }
+.result-time { color: #555; }
+
+.result-body {
+    padding: 15px;
+ }
+
+    /* Tableaux Logs */
+.log-row {
+    display: flex; justify-content: space-between;
+    padding: 6px 0; border-bottom: 1px dashed #222;
+    font-size: 0.9rem;
+ }
+
+ .log-left { color: #ccc; }
+ .log-right { font-family: monospace; color: #fff; }
+  
+ .status-ban { color: #ff4d4d; font-weight: bold; }
+ .status-ok { color: #00FF41; }
+
+    /* Checkmarks Grid */
+.vectors-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-top: 20px;
+  }
+  
+.vector-item {
+    background: #1a1a1a; padding: 10px; border-radius: 6px;
+    font-size: 0.8rem; color: #888; display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid transparent;
+ }
+  
+.vector-item.active {
+    border-color: #00FF41; color: #00FF41;
+ }
+  
+.vector-item svg { width: 16px; height: 16px; fill: currentColor; }
+
+    /* --- BOUTON CHAINE --- */
+.chain-link {
+    margin-top: 20px;
+    color: #555; font-size: 0.85rem;
+    text-decoration: none;
+    display: flex; align-items: center; gap: 5px; justify-content: center;
+    transition: 0.3s;
+ }
+.chain-link:hover { color: white; text-shadow: 0 0 8px white; }
+
+   @media (max-width: 600px) {
+   .brand-name { font-size: 2rem; }
+   .btn-group { display: flex; flex-direction: row-reverse; }
+ }
+
+    /* --- ANIMATIONS --- */
+   .fade-in { animation: fadeIn 0.5s forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+    <canvas id="matrix-bg"></canvas>
+
+    <div class="main-interface">
+    <div class="hero-header">
+    <div class="brand-name">CARLANE-BAN</div>
+    <div class="brand-subtitle">Attack Engine v4.2</div>
+   </div>
+
+    <!-- INPUT ZONE -->
+    <div class="input-wrapper">
+    <input type="text" id="phoneNumber" placeholder="+241 XX XX XX XXXX">
+   </div>
+
+    <!-- CONTROLS -->
+    <div class="btn-group">
+    <button class="btn-action btn-check highlight" onclick="checkNumber()">Vérifier</button>
+    <button class="btn-action btn-check" style="border: 1px solid #ff4d4d; color: #ff4d4d;" onclick="runBan()">BAN PERMANENT ⚡</button>
+  </div>
+
+    <!-- RESULT BOX (Affichage Python Bot) -->
+    <div class="result-box" id="resultBox">
+    <div class="result-header">
+    <span><span class="result-icon">◉</span> SYSTEM STATUS</span>
+    <span id="SystemTime" class="result-time">00:00:00</span>
+    </div>
+  
+    <div class="result-body fade-in" id="resultBody">
+    <!-- Content inserted by JS -->
+   </div>
+  </div>
+
+    <a href="https://whatsapp.com/channel/0029VbDgE40BFLgaySZtWp17" target="_blank" class="chain-link">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0.16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    REJOINDRE LA CHAÎNE
+    </a>
+  </div>
+
+    <script>
+    // --- 1. TECHNIQUE MATRIX ---
+    const canvas = document.getElementById('matrix-bg');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  
+    const chars = "01XYZ<>{}[]";
+    const fontSize = 16; const columns = canvas.width / fontSize;
+    const drops = []; for(let i=0; i<columns; i++) drops[i] = 1;
+    const colors = ["#00F260", "#0575E6", "#00A8FF"];
+
+    function drawMatrix() {
+    ctx.fillStyle = "rgba(5, 5, 5, 0.1)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = fontSize + 'px monospace';
+    for(let i=0; i<drops.length; i++) {
+    const text = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+  }
+    setInterval(drawMatrix, 30);
+
+    // --- 2. ENGINE PYTHON JS (LOGIQUE LIGNE PAR LIGNE) ---
+    const engine = {
+    async ban(phone, mode = "perm") {
+    // Simule le délai de l'API (5.5s - 9.5s)
+    await wait(random(5500, 9500)); 
+    const emails = random(14, 19);
+   return {
+    emails: emails,
+    total_emails: 19,
+    meta: true,
+    web: true,
+    app: true,
+    abuse: true,
+    vectors: emails + 4,
+    mode: mode
+  };
+ },
+    async check(phone) {
+    await wait(2000);
+    const r = Math.random();
+    if(r < 0.55) return "ACTIF ✅";
+    if(r < 0.85) return "BANNI ⛔";
+    return "LIMITÉ ⚠️";
+  }
+ };
+
+    async function runBan() {
+    const phone = document.getElementById('phoneNumber').value;
+    if(!phone) return alert("Entrez un numéro d'abord!");
+
+    // UI Reset
+    const box = document.getElementById('resultBox');
+    const body = document.getElementById('resultBody');
+    box.style.display = 'block';
+    body.innerHTML = `<div style="text-align:center">Analyse...<br>Envoi des emails massifs...</div>`;
+
+    // Call Engine
+    const res = await engine.ban(phone, "perm");
+
+    // REMPLISSAGE DU CODE PYTHON TELECOPIÉ
+    body.innerHTML = `
+    <div class="log-row">
+    <span class="log-left">Target</span>
+    <span class="log-right">${phone}</span>
+   </div>
+    <div class="log-row">
+    <span class="log-left">Mode</span>
+    <span class="log-right status-ban">${res.mode.toUpperCase()}</span>
+   </div>
+    <div class="log-row">
+    <span class="log-left">By</span>
+    <span class="log-right">CARLANE-ENGINE</span>
+   </div>
+    <div class="log-row">
+    <span class="log-left">Dev</span>
+    <span class="log-right">@CARLANE_OFFICIAL</span>
+  </div>
+
+    <div style="margin-top:15px; font-weight:bold; color:white; font-size:0.9rem;">📊 RÉSULTATS</div>
+    <div style="display:flex; justify-content:space-between; margin-top:5px; color:#888;">
+    <span>META GRAPH API</span>
+    <span style="color:#00FF41">✅ ACTIVE</span>
+   </div>
+    <div style="display:flex; justify-content:space-between; margin-top:5px; color:#888;">
+    <span>WEB FORMS</span>
+    <span style="color:#00FF41">✅ ACTIVE</span>
+   </div>
+    <div style="display:flex; justify-content:space-between; margin-top:5px; color:#888;">
+    <span>APP REPORT</span>
+    <span style="color:#00FF41">✅ ACTIVE</span>
+   </div>
+    <div style="display:flex; justify-content:space-between; margin-top:5px; color:#888;">
+    <span>ABUSE API</span>
+    <span style="color:#00FF41">✅ ACTIVE</span>
+   </div>
+    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed #333; padding-top:10px;">
+    <span style="color:#fff;">EMAILS BOMB</span>
+    <span style="font-family:monospace; color:#00FF41">${res.emails}/${res.total_emails}</span>
+   </div>
+    <div style="display:flex; justify-content:space-between; margin-top:5px;">
+    <span style="color:#fff;">TOTAL VECTORS</span>
+    <span style="font-family:monospace; color:white">${res.vectors}</span>
+  </div>
+
+    <div style="margin-top:15px; text-align:center;">
+    <button onclick="location.reload()" style="background:#ff4d4d; border:none; color:white; padding:5px 15px; border-radius:4px; cursor:pointer;">NOUVEAU TIR</button>
+   </div>
+  `;
+ }
+
+    async function checkNumber() {
+    const phone = document.getElementById('phoneNumber').value;
+    const res = await engine.check(phone);
+    alert(`Status: ${res}`);
+ }
+
+    function random(min, max) { return Math.random() * (max - min) + min; }
+    function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+   </script>
+</body>
+</html>
